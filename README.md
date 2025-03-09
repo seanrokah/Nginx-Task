@@ -48,6 +48,7 @@ This will check for NGINX, install it if necessary, configure a virtual host, an
 ## 📝 Notes
 - This script assumes a Debian-based system with NGINX installed. It may need to be modified for other distributions or configurations.
 - The script will create a backup of the existing NGINX configuration file before making any changes.
+- [Task description](TASKS.md)
 
 ## 📂 Navigator 
 - [Nginx_Tool.sh](./Task/Nginx_Tool.sh)
