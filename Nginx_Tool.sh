@@ -1,23 +1,46 @@
 #!/bin/bash
 ######################################
-# Writtent By : Sean Rokah & Nehoray Kanizo Aka 
+# Written By : Sean Rokah & Nehoray Kanizo  
+# Date: 2025-09-03
+# Purpose: NGINX Configuration Tool
+# Version: 1.0.0
 #
-# nginx_task.sh - Script to set up a complete NGINX configuration file
-# with a properly nested http block, server block, and location directives.
-#
-# Usage:
-#  ./nginx_task.sh [--check-nginx] [--virtual-host] [--user-dir] [--auth] [--auth-pam] [--cgi] [--all]
-# Use --all to run all configuration options.
-#
-# This script will back up your existing /etc/nginx/nginx.conf and then write
-# a new complete configuration file that .
-#
+# This script is a tool for configuring NGINX with various options.
+# It can be used to set up a complete NGINX configuration file with a properly
+# nested http block, server block, and location directives.
+# The script can also check for the presence of NGINX and install it if necessary.
+# Options include:
+#  - Virtual host configuration
+#  - User directory support
+#  - Basic HTTP authentication
+#  - PAM authentication
+#  - CGI scripting support
+# The script can be run with individual options or all options together.
 # It must be run with root privileges.
+#
+# Usage: ./nginx_task.sh [OPTIONS]
+# Options:
+#  --check-nginx      Check and install NGINX if not present.
+#  --virtual-host     Configure a virtual host (requires domain name).
+#  --user-dir         Add user directory support.
+#  --auth             Add basic HTTP authentication.
+#  --auth-pam         Add PAM authentication.
+#  --cgi              Add CGI scripting support.
+#  --all              Enable all options.
+#  -h, --help         Show this help message.
+#
+# Example:
+#  ./nginx_task.sh --check-nginx --virtual-host --auth
+# This will check for NGINX, install it if necessary, configure a virtual host,
+# and add basic HTTP authentication.
+#
+# Note: This script assumes a Debian-based system with NGINX installed.
+# It may need to be modified for other distributions or configurations.
 ######################################
+
 
 set -e
 
-# Initialize option flags
 CHECK_NGINX=0
 VHOST=0
 USER_DIR=0
@@ -25,7 +48,6 @@ AUTH=0
 AUTH_PAM=0
 CGI=0
 
-# Function: Print usage
 usage() {
     cat <<EOF
 Usage: $0 [OPTION]
@@ -41,7 +63,6 @@ Options:
 EOF
 }
 
-# Parse command-line arguments
 if [ "$#" -eq 0 ]; then
     usage
     exit 1
@@ -88,7 +109,6 @@ while [ "$1" != "" ]; do
     shift
 done
 
-# Function: Check if a package is installed; if not, install it.
 install_package() {
     if ! dpkg -s "$1" >/dev/null 2>&1; then
         echo "Package $1 is not installed. Installing..."
@@ -98,7 +118,6 @@ install_package() {
     fi
 }
 
-# Function: Check that NGINX is installed; if not, install it.
 check_nginx_installed() {
     echo "Checking if NGINX is installed..."
     if ! command -v nginx >/dev/null 2>&1; then
@@ -109,22 +128,18 @@ check_nginx_installed() {
     fi
 }
 
-# Ensure running as root
 if [ "$EUID" -ne 0 ]; then
     echo "Please run as root (e.g., using sudo)."
     exit 1
 fi
 
-# Run NGINX check if requested
 if [ "$CHECK_NGINX" -eq 1 ]; then
     check_nginx_installed
 fi
 
-# Default domain and document root if not using virtual-host option
 DOMAIN="localhost"
 DOC_ROOT="/var/www/default"
 
-# If virtual host option is selected, prompt for domain name and create document root.
 if [ "$VHOST" -eq 1 ]; then
     read -p "Enter the virtual host domain name (e.g., example.com): " input_domain
     if [ -n "$input_domain" ]; then
@@ -137,18 +152,15 @@ if [ "$VHOST" -eq 1 ]; then
         echo "No domain provided. Using default domain: ${DOMAIN}"
     fi
 else
-    # For non-virtual-host configurations, ensure a default doc root exists.
     mkdir -p "$DOC_ROOT"
     [ -f "${DOC_ROOT}/index.html" ] || echo "<html><body><h1>Welcome to ${DOMAIN}</h1></body></html>" > "${DOC_ROOT}/index.html"
 fi
 
-# Variables to hold additional location blocks
 USER_DIR_BLOCK=""
 AUTH_BLOCK=""
 AUTH_PAM_BLOCK=""
 CGI_BLOCK=""
 
-# If user directory support is enabled, create location block
 if [ "$USER_DIR" -eq 1 ]; then
     USER_DIR_BLOCK=$(cat <<'EOF'
         # User directories (e.g., http://domain/~username/)
@@ -160,7 +172,6 @@ EOF
 )
 fi
 
-# If basic auth is enabled, prompt for credentials and create htpasswd file and location block.
 if [ "$AUTH" -eq 1 ]; then
     install_package apache2-utils
     read -p "Enter username for basic auth: " auth_user
@@ -178,7 +189,6 @@ EOF
 )
 fi
 
-# If PAM auth is enabled, check for the module and add PAM location block.
 if [ "$AUTH_PAM" -eq 1 ]; then
     PAM_MODULE="/usr/lib/nginx/modules/ngx_http_auth_pam_module.so"
     if [ -f "$PAM_MODULE" ]; then
@@ -253,7 +263,6 @@ ${CGI_BLOCK}
 EOF
 )
 
-# Back up the current main configuration file.
 CONFIG_FILE="/etc/nginx/nginx.conf"
 BACKUP_FILE="/etc/nginx/nginx.conf.bak_$(date +%Y%m%d%H%M%S)"
 if [ -f "$CONFIG_FILE" ]; then
@@ -264,7 +273,6 @@ fi
 echo "Writing complete configuration to $CONFIG_FILE..."
 echo "${NGINX_CONFIG}" > "$CONFIG_FILE"
 
-# Test NGINX configuration and reload if successful
 echo "Testing NGINX configuration..."
 if nginx -t; then
     echo "NGINX configuration test passed. Reloading NGINX..."
