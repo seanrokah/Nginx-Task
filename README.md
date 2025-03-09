@@ -1,8 +1,8 @@
 # 🚀 NGINX Configuration Tool
 
 ## 👥 Authors
-- Sean Rokah(https://github.com/seanrokah)
-- Nehoray Kanizo(https://github.com/NehorayK)
+- Sean Rokah[https://github.com/seanrokah]
+- Nehoray Kanizo[https://github.com/NehorayK]
 
 ## 📄 Overview
 This script is a tool for configuring NGINX with various options. It can be used to set up a complete NGINX configuration file with a properly nested `http` block, `server` block, and `location` directives. The script can also check for the presence of NGINX and install it if necessary.
